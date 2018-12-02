@@ -34,12 +34,16 @@ render_3d = true;
 render_enclosure = 2; // 0=invisible; 1=translucent; 2=opaque color;
 render_flaps = 2; // 0=invisible; 1=front flap only; 2=all flaps
 render_flap_area = 0; // 0=invisible; 1=collapsed flap exclusion; 2=collapsed+extended flap exclusion
-render_letters = "44";
+render_letters = "YO";
 render_units = len(render_letters);
 render_unit_separation = 0;
 render_pcb = true;
 render_bolts = true;
 render_motor = true;
+render_main_spool = true;
+render_secondary_spool = true;
+
+
 
 // 2d parameters:
 render_index = -1;
@@ -79,21 +83,21 @@ captive_nut_inset=6;
 
 assembly_inner_radius = m4_hole_diameter/2;
 
-assembly_color = [.76, .60, .42];
-assembly_color1 = [.882, .694, .486]; //"e1b17c";
-assembly_color2 = [.682, .537, .376]; //"ae8960";
-assembly_color3 = [.416, .325, .227]; //"6A533A";
-assembly_color4 = [.204, .161, .114]; //"34291D";
+assembly_color = [.6, .6, .6];
+assembly_color1 = [.5, .5, .5]; //"e1b17c";
+assembly_color2 = [.2, .2, .2]; //"ae8960";
+assembly_color3 = [.3, .3, .3]; //"6A533A";
+assembly_color4 = [.4, .4, .4]; //"34291D";
 
 flap_rendered_angle = 90;
 
 letter_height = flap_height * 0.75 * 2;
 
 // Amount of slop of the flap side to side between the 2 spools
-flap_width_slop = 0.1;
+flap_width_slop = 1;
 
 // Amount of slop for the spool assembly side-to-side inside the enclosure
-spool_width_slop = 1;
+spool_width_slop = 2;
 
 
 num_flaps = 40;
@@ -142,19 +146,19 @@ motor_slop_radius = 3;
 enclosure_wall_to_wall_width = thickness + spool_width_slop/2 + spool_width + spool_width_slop/2 + max(28byj48_mount_bracket_height + m4_button_head_length, 4 + 28byj48_mount_bracket_height - spool_width_slop/2) + thickness;
 
 // Width of the front panel
-enclosure_width = enclosure_wall_to_wall_width + 28byj48_chassis_height + 28byj48_chassis_height_slop - thickness - 28byj48_mount_bracket_height;
+enclosure_width = enclosure_wall_to_wall_width + 28byj48_chassis_height + 28byj48_chassis_height_slop - thickness - 28byj48_mount_bracket_height + 6;
 enclosure_horizontal_inset = (enclosure_width - enclosure_wall_to_wall_width)/2;
 front_window_upper_base = (flap_height - flap_pin_width/2);
 front_window_overhang = 3;
 front_window_upper = front_window_upper_base - front_window_overhang;
-front_window_lower = sqrt(outer_exclusion_radius*outer_exclusion_radius - front_forward_offset*front_forward_offset);
+front_window_lower = sqrt(outer_exclusion_radius*outer_exclusion_radius - front_forward_offset*front_forward_offset) -10;
 front_window_slop = 0;
 front_window_width = spool_width_slop + spool_width + front_window_slop;
 front_window_right_inset = thickness - front_window_slop/2;
 enclosure_vertical_margin = 10; // gap between top/bottom of flaps and top/bottom of enclosure
 enclosure_vertical_inset = thickness*1.5; // distance from top of sides to top of the top piece
-enclosure_height_upper = exclusion_radius + enclosure_vertical_margin + thickness + enclosure_vertical_inset;
-enclosure_height_lower = flap_pitch_radius + flap_height + enclosure_vertical_margin + thickness + enclosure_vertical_inset;
+enclosure_height_upper = exclusion_radius + enclosure_vertical_margin + thickness + enclosure_vertical_inset - 10;
+enclosure_height_lower = flap_pitch_radius + flap_height + enclosure_vertical_margin + thickness + enclosure_vertical_inset -10;
 enclosure_height = enclosure_height_upper + enclosure_height_lower;
 
 enclosure_horizontal_rear_margin = thickness; // minumum distance between the farthest feature and the rear
@@ -227,22 +231,6 @@ module standard_m4_bolt(nut_distance=-1) {
 }
 
 
-// ##### CAPTIVE NUT NEGATIVE #####
-
-// Centered in the x dimension
-module captive_nut(bolt_diameter, bolt_length, nut_width, nut_length, nut_inset) {
-    union() {
-        translate([-bolt_diameter/2, 0, 0])
-            square([bolt_diameter, bolt_length]);
-        translate([-nut_width/2, nut_inset, 0])
-            square([nut_width, nut_length]);
-    }
-}
-module m4_captive_nut(bolt_length=m4_bolt_length) {
-    captive_nut(m4_hole_diameter, bolt_length + 1, m4_nut_width_flats, m4_nut_length_padded, captive_nut_inset);
-}
-
-
 // ##### Struts for bracing spool #####
 module spool_strut_tab_hole() {
     square([thickness, spool_strut_tab_width], center=true);
@@ -284,13 +272,55 @@ module spool_strut() {
 }
 
 module spool_struts() {
-    for (i=[0:3]) {
-        angle = 90*i;
-        //color([i < 2 ? 0 : 1, i == 0 || i == 2 ? 0 : 1, 0])
-        color(i % 2 == 0 ? assembly_color2 : assembly_color3)
-        translate([0, sin(angle)*(spool_strut_tab_outset + spool_strut_explosion), cos(angle)*(spool_strut_tab_outset + spool_strut_explosion)])
-            rotate([-angle, 0, 0])
-                spool_strut();
+    difference() {
+        echo(spool_strut_width);
+        translate([0, -9.6, 9.6]) {
+            rotate([0, 90, 0]) {
+                linear_extrude(spool_strut_length - thickness) {
+                    square([spool_strut_width, spool_strut_width]);
+                }
+            }
+        }
+        
+         translate([0, -9.6 + thickness, 9.6 - thickness]) {
+            rotate([0, 90, 0]) {
+                linear_extrude(spool_strut_length - thickness) {
+                    square([spool_strut_width - thickness - thickness, spool_strut_width - thickness - thickness]);
+                }
+            }
+        }
+    }
+    
+    translate([spool_strut_length - thickness, -9.6, 9.6 - (spool_strut_width - spool_strut_tab_width) / 2]) {
+        rotate([0, 90, 0]) {
+            linear_extrude(thickness) {
+                square([spool_strut_tab_width, thickness]);
+            }
+        }
+    }
+    
+    translate([spool_strut_length - thickness, 9.6 - thickness, 9.6 - (spool_strut_width - spool_strut_tab_width) / 2]) {
+        rotate([0, 90, 0]) {
+            linear_extrude(thickness) {
+                square([spool_strut_tab_width, thickness]);
+            }
+        }
+    }
+    
+    translate([spool_strut_length, - 9.6 + (spool_strut_width - spool_strut_tab_width) / 2 , 9.6 - thickness]) {
+        rotate([0, 0, 90]) {
+            linear_extrude(thickness) {
+                square([spool_strut_tab_width, thickness]);
+            }
+        }
+    }
+    
+    translate([spool_strut_length, - 9.6 + (spool_strut_width - spool_strut_tab_width) / 2, -9.6]) {
+        rotate([0, 0, 90]) {
+            linear_extrude(thickness) {
+                square([spool_strut_tab_width, thickness]);
+            }
+        }
     }
 }
 
@@ -303,7 +333,7 @@ module flap_spool_complete(captive_nut=false, motor_shaft=false, magnet_hole=fal
 
             spool_strut_tab_holes();
             if (captive_nut) {
-                circle(r=m4_nut_width_corners_padded/2, $fn=6);
+                circle(r=m4_hole_diameter/2, $fn=30);
             }
             if (motor_shaft) {
                 rotate([0, 0, 90]) {
@@ -378,33 +408,6 @@ module motor_shaft() {
     }
 }
 
-module front_tabs_negative() {
-    for (i = [0 : num_front_tabs-1]) {
-        translate([thickness + (i*2+0.5) * front_tab_width, 0, 0])
-            square([front_tab_width, thickness], center=true);
-    }
-    for (i = [0 : num_front_tabs-2]) {
-        translate([thickness + (i*2+1.5) * front_tab_width, 0, 0])
-            circle(r=m4_hole_diameter/2, $fn=30);
-    }
-}
-
-module connector_bracket() {
-    linear_extrude(height=thickness) {
-        difference() {
-            square([connector_bracket_width, connector_bracket_length_outer]);
-            translate([connector_bracket_thickness, -eps]) {
-                square([connector_bracket_width - connector_bracket_thickness*2, connector_bracket_length_outer - connector_bracket_length_inner + eps]);
-            }
-            translate([connector_bracket_thickness, -eps]) {
-                square([thickness, connector_bracket_length_outer - connector_bracket_overlap + eps]);
-            }
-            translate([connector_bracket_width - connector_bracket_thickness - thickness, -eps]) {
-                square([thickness, connector_bracket_length_outer - connector_bracket_overlap + eps]);
-            }
-        }
-    }
-}
 
 module enclosure_front() {
     linear_extrude(height=thickness) {
@@ -414,16 +417,8 @@ module enclosure_front() {
             }
 
             // Viewing window cutout
-            translate([front_window_right_inset, enclosure_height_lower - front_window_lower])
+            translate([front_window_right_inset, enclosure_height_lower - front_window_lower + 1])
                 square([front_window_width, front_window_lower + front_window_upper]);
-
-            // Front lower tabs
-            translate([0, thickness * 0.5 + enclosure_vertical_inset, 0])
-                front_tabs_negative();
-
-            // Front upper tabs
-            translate([0, enclosure_height - thickness * 0.5 - enclosure_vertical_inset, 0])
-                front_tabs_negative();
         }
     }
 }
@@ -442,22 +437,6 @@ module motor_mount() {
     }
 }
 
-module side_tabs_negative(hole_sizes=[], extend_last_tab=false) {
-    for (i = [0 : len(hole_sizes)]) {
-        length = (extend_last_tab && i == len(hole_sizes)) ? side_tab_width * side_tab_width_fraction + eps : side_tab_width * side_tab_width_fraction;
-        translate([-thickness / 2, thickness + (i*2) * side_tab_width + side_tab_width * (1 - side_tab_width_fraction)/2, 0])
-            square([thickness, length]);
-    }
-    for (i = [0 : len(hole_sizes) - 1]) {
-        hole_size = hole_sizes[i];
-        if (hole_size > 0) {
-            bolt_head_hole = hole_size == 2;
-            translate([0, thickness + (i*2 + 1.5) * side_tab_width, 0])
-                circle(r=(bolt_head_hole ? m4_button_head_diameter : m4_hole_diameter)/2, $fn=30);
-        }
-    }
-}
-
 module backstop_bolt_slot(radius) {
     hull() {
         circle(r=radius, $fn=15);
@@ -467,46 +446,30 @@ module backstop_bolt_slot(radius) {
     }
 }
 
-module connector_bracket_side_holes() {
-    // overlap slot
-    translate([enclosure_vertical_inset - thickness, -connector_bracket_overlap]) {
-        square([thickness, connector_bracket_overlap + eps]);
-    }
-}
-
 module enclosure_left() {
     linear_extrude(height=thickness) {
         difference() {
-            square([enclosure_height, enclosure_length]);
-            translate([enclosure_height_lower, enclosure_length - front_forward_offset, 0])
-                circle(r=m4_hole_diameter/2, center=true, $fn=30);
+            translate([0,0,0]) {
+                hull() {
+                    translate([100, 10,0]) {
+                        circle(r=10);
+                    }
+
+                    translate([10, 10,0]) {
+                        circle(r=10);
+                    }
+
+                    translate([0,45,0]) {
+                        square([125, 2]);
+                    }
+                }
+            }
 
             translate([enclosure_height_lower, enclosure_length - front_forward_offset]) {
                 rotate([0, 0, 90]) {
                     motor_mount();
                 }
             }
-
-            // bottom side tabs
-            translate([thickness * 0.5 + enclosure_vertical_inset, enclosure_length, 0])
-                mirror([0, 1, 0])
-                side_tabs_negative(hole_sizes=[1]);
-
-            // top side tabs
-            translate([enclosure_height - thickness * 0.5 - enclosure_vertical_inset, enclosure_length, 0])
-                mirror([0, 1, 0])
-                    side_tabs_negative(hole_sizes=[1]);
-
-            // Connector bracket cuts
-            translate([enclosure_height, enclosure_length]) {
-                mirror([1, 0, 0]) {
-                    connector_bracket_side_holes();
-                }
-            }
-            translate([0, enclosure_length]) {
-                connector_bracket_side_holes();
-            }
-
 
             // PCB mounting holes
             translate([enclosure_height_lower - magnet_hole_offset - pcb_hole_to_sensor_y, enclosure_length - front_forward_offset - pcb_hole_to_sensor_x]) {
@@ -529,6 +492,7 @@ module shaft_centered_motor_hole() {
         square([width, length]);
 }
 
+/*
 module enclosure_right() {
     linear_extrude(height=thickness) {
         difference() {
@@ -540,25 +504,87 @@ module enclosure_right() {
             translate([enclosure_height_upper - backstop_bolt_vertical_offset, enclosure_length_right - front_forward_offset, 0]) {
                 backstop_bolt_slot(radius = m4_hole_diameter/2);
             }
+        }
+    }
+}
+*/
 
-            // top side tabs
-            translate([0.5*thickness + enclosure_vertical_inset, enclosure_length_right, 0])
-                mirror([0, 1, 0])
-                    side_tabs_negative(hole_sizes=[1]);
+module enclosure_right() {
+    
+    translate([66, 4, -3]) {
+        rotate([0, 0, 0]) {
+            standard_m4_bolt(nut_distance=thickness + 7*spool_horizontal_explosion);
+        }
+    }
+    
+    color(assembly_color2) {
+        linear_extrude(height=thickness) {
+            
+            // Spool hole
+            difference() {
+                //square([enclosure_height, enclosure_length_right]);
+                
+                translate([60,0,0]) {
+                    hull() {
+                        translate([-8,24,0]) {
+                           square([26, enclosure_length_right-24]);
+                        }
+                        translate([6,4,0]) {
+                            circle(r=6, center=true);
+                        }
+                    }
+                }
+                
+                translate([enclosure_height_upper+10, enclosure_length_right - front_forward_offset, 0])
+                    circle(r=m4_nut_width_corners/2, center=true, $fn=6);
+            }
 
-            // bottom side tabs
-            translate([enclosure_height - 0.5*thickness - enclosure_vertical_inset, enclosure_length_right, 0])
-                mirror([0, 1, 0])
-                    side_tabs_negative(hole_sizes=[1]);
-
-            // Connector bracket cuts
-            translate([enclosure_height, enclosure_length_right]) {
-                mirror([1, 0, 0]) {
-                    connector_bracket_side_holes();
+            // Backstop
+            difference() {
+            translate([50,0,0]) {
+                hull() {
+                    translate([51,24,0]) {
+                        square([37.8, enclosure_length_right-24]);
+                    }
+                    translate([64,4,0]) {
+                        circle(r=6, center=true);
+                    }
+                    
+                    translate([79, -10,0]) {
+                            circle(r=10);
+                        }
                 }
             }
-            translate([0, enclosure_length_right]) {
-                connector_bracket_side_holes();
+                    
+                    // backstop bolt slot
+                translate([enclosure_height_upper - backstop_bolt_vertical_offset, enclosure_length_right - front_forward_offset, 0]) {
+                    backstop_bolt_slot(radius = m4_hole_diameter/2);
+                }
+            }
+        }
+        
+        
+        translate([0, 0, -thickness]) {
+             linear_extrude(height=thickness) {
+                
+                // Spool hole
+                difference() {
+                    //square([enclosure_height, enclosure_length_right]);
+                    
+                    translate([60,0,0]) {
+                        hull() {
+                            translate([-8,24,0]) {
+                                square([26, enclosure_length_right-24]);
+                            }
+                            translate([6,4,0]) {
+                                circle(r=6, center=true);
+                            }
+                        }
+                    }
+                    
+                    translate([enclosure_height_upper+10, enclosure_length_right - front_forward_offset, 0])
+                        circle(r=m4_hole_diameter/2, center=true, $fn=30);
+                }
             }
         }
     }
@@ -643,6 +669,12 @@ module enclosure_top() {
     }
 }
 
+module enclosure_base() {
+    linear_extrude(height = 2) {
+        square([66, 40]);
+    }
+}
+
 module enclosure_bottom() {
     linear_extrude(height = thickness) {
         translate([thickness, 0, 0]) {
@@ -714,88 +746,32 @@ module split_flap_3d(letter, include_connector) {
     }
 
     module positioned_right() {
-        translate([0, -enclosure_length_right + front_forward_offset, enclosure_height_upper])
+        translate([0, -enclosure_length_right + front_forward_offset, enclosure_height_upper+10])
             rotate([0, 90, 0])
                 enclosure_right();
     }
-
-    module positioned_top() {
-        translate([0, front_forward_offset, enclosure_height_upper - enclosure_vertical_inset])
-            rotate([180, 0, 0])
-                enclosure_top();
-    }
-
-    module positioned_bottom() {
-        translate([0, front_forward_offset - enclosure_length_right, -enclosure_height_lower + enclosure_vertical_inset]) {
-            enclosure_bottom();
+    
+    module positioned_base() {
+        translate([0, -15, -72.7]) {
+            enclosure_base();
         }
     }
-
-    module positioned_bottom_etch() {
-        translate([0, front_forward_offset - enclosure_length_right, -enclosure_height_lower + enclosure_vertical_inset]) {
-            translate([0, 0, thickness]) {
-                enclosure_bottom_etch();
-            }
+    
+    module connectors() {
+        translate([-11, 15.2, 40]) {
+            connector();
         }
-    }
-
-    module positioned_top_connector() {
-        translate([enclosure_wall_to_wall_width - thickness - connector_bracket_thickness, front_forward_offset - connector_bracket_length_outer, enclosure_height_upper - enclosure_vertical_inset]) {
-            connector_bracket();
+        
+        translate([-11, 15.2, -60]) {
+            connector();
         }
-    }
-
-    module positioned_bottom_connector() {
-        translate([enclosure_wall_to_wall_width - thickness - connector_bracket_thickness, front_forward_offset - connector_bracket_length_outer, - enclosure_height_lower + enclosure_vertical_inset - thickness]) {
-            connector_bracket();
+        
+        translate([75.4, 15.2, 40]) {
+            connector(nut=true);
         }
-    }
-
-    module positioned_left_bolts() {
-        // Top
-        translate([enclosure_wall_to_wall_width, front_forward_offset - side_tab_width * 2, enclosure_height_upper - enclosure_vertical_inset - thickness/2]) {
-            rotate([0, -90, 0]) {
-                standard_m4_bolt(nut_distance=captive_nut_inset);
-            }
-        }
-
-        // Bottom
-        translate([enclosure_wall_to_wall_width, front_forward_offset - side_tab_width * 2, -enclosure_height_lower + enclosure_vertical_inset + thickness/2]) {
-            rotate([0, -90, 0]) {
-                standard_m4_bolt(nut_distance=captive_nut_inset);
-            }
-        }
-    }
-
-    module positioned_right_bolts() {
-        // Top
-        translate([0, front_forward_offset - side_tab_width * 2, enclosure_height_upper - enclosure_vertical_inset - thickness/2]) {
-            rotate([0, 90, 0]) {
-                standard_m4_bolt(nut_distance=captive_nut_inset);
-            }
-        }
-
-        // Bottom
-        translate([0, front_forward_offset - side_tab_width * 2, -enclosure_height_lower + enclosure_vertical_inset + thickness/2]) {
-            rotate([0, 90, 0]) {
-                standard_m4_bolt(nut_distance=captive_nut_inset);
-            }
-        }
-    }
-
-    module positioned_front_bolts() {
-        // Top
-        translate([enclosure_wall_to_wall_width/2, front_forward_offset + thickness, enclosure_height_upper - enclosure_vertical_inset - thickness/2]) {
-            rotate([0, 90, -90]) {
-                standard_m4_bolt(nut_distance=captive_nut_inset);
-            }
-        }
-
-        // Bottom
-        translate([enclosure_wall_to_wall_width/2, front_forward_offset + thickness, -enclosure_height_lower + enclosure_vertical_inset + thickness/2]) {
-            rotate([0, 90, -90]) {
-                standard_m4_bolt(nut_distance=captive_nut_inset);
-            }
+        
+        translate([75.4, 15.2, -60]) {
+            connector();
         }
     }
 
@@ -805,40 +781,18 @@ module split_flap_3d(letter, include_connector) {
                 positioned_front();
             color(assembly_color2)
                 positioned_left();
-            color(assembly_color2)
+           // color(assembly_color2)
                 positioned_right();
-            color(assembly_color3)
-                positioned_top();
-            color(assembly_color3)
-                positioned_bottom();
-            positioned_bottom_etch();
-            if (include_connector) {
-                color(assembly_color4)
-                    positioned_top_connector();
-                color(assembly_color4)
-                    positioned_bottom_connector();
-            }
-            if (render_bolts) {
-                positioned_left_bolts();
-                positioned_right_bolts();
-                positioned_front_bolts();
-            }
+            color(assembly_color2)
+                positioned_base();
+            color(assembly_color2)
+                connectors();
         } else if (render_enclosure == 1) {
             %positioned_front();
             %positioned_left();
             %positioned_right();
-            %positioned_top();
-            %positioned_bottom();
-            %positioned_bottom_etch();
-            if (include_connector) {
-                %positioned_top_connector();
-                %positioned_bottom_connector();
-            }
-            if (render_bolts) {
-                positioned_left_bolts();
-                positioned_right_bolts();
-                positioned_front_bolts();
-            }
+             %positioned_base();
+             %connectors();
         }
     }
 
@@ -850,6 +804,30 @@ module split_flap_3d(letter, include_connector) {
                     pcb();
                     translate([0, 0, -thickness - 2 * eps]) {
                         standard_m4_bolt(nut_distance=thickness + pcb_thickness + 4*eps);
+                    }
+                }
+            }
+        }
+    }
+    
+    module connector(nut=false) {
+        difference() {
+            hull() {
+                cube([thickness, 7, 14]);
+                
+                translate([0, 0, 7]) {
+                    rotate([0, 90, 0]) {
+                        cylinder(r=7, h=thickness);
+                    }
+                }
+            }
+            
+            translate([0, 0, 7]) {
+                rotate([0, 90, 0]) {
+                    if (nut) {
+                        cylinder(r=m4_nut_width_corners/2, h=thickness, $fn=6);
+                    } else {
+                        cylinder(r=m4_hole_diameter/2, h=thickness, $fn=30);
                     }
                 }
             }
@@ -941,27 +919,34 @@ module split_flap_3d(letter, include_connector) {
             }
         }
 
-        spool_struts();
+        if (render_main_spool) {
+            color(assembly_color)
+                spool_struts();
+        }
 
         // motor spool
         color(assembly_color) {
             translate([spool_width - thickness + 5*spool_horizontal_explosion, 0, 0]) {
                 rotate([0, 90, 0]) {
-                    flap_spool_complete(motor_shaft=true, magnet_hole=true);
+                    if (render_secondary_spool) {
+                        flap_spool_complete(motor_shaft=true, magnet_hole=true);
+                    }
                 }
             }
         }
         color(assembly_color1) {
             translate([thickness - 3*spool_horizontal_explosion, 0, 0]) {
                 rotate([0, 90, 0]) {
-                    spool_retaining_wall(m4_bolt_hole=true);
+              //      spool_retaining_wall(m4_bolt_hole=true);
                 }
             }
         }
         color(assembly_color) {
             translate([-5*spool_horizontal_explosion, 0, 0]) {
                 rotate([0, 90, 0]) {
-                    flap_spool_complete(captive_nut=true);
+                    if (render_main_spool) {
+                        flap_spool_complete(captive_nut=true);
+                    }
                 }
             }
         }
@@ -1001,13 +986,8 @@ module split_flap_3d(letter, include_connector) {
     }
 }
 
-module laser_etch() {
-    if (render_etch || render_index == -1) {
-        children();
-    }
-}
-
 if (render_3d) {
+    
     for (i = [0 : render_units - 1]) {
         translate([-enclosure_width/2 + (-(render_units-1) / 2 + i)*(enclosure_width + render_unit_separation), 0, 0])
             split_flap_3d(render_letters[render_units - 1 - i], include_connector=(i != render_units - 1));

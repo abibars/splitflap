@@ -23,7 +23,7 @@ clamp_inset = 0.4;
 
 punch_width = 26;
 punch_lower_height = 7.7;
-punch_gap_height = 2.5;
+punch_gap_height = 2.2;
 slot_inset_depth = 9.3;
 slot_depth = 3;
 slot_width = 15;
@@ -44,7 +44,7 @@ union() {
 
     translate([0, 0, punch_gap_height - print_tolerance*2]) {
         linear_extrude(height=punch_lower_height, scale=[1, (jig_thickness + clamp_inset)/jig_thickness]) {
-            square([jig_length, jig_thickness]);
+           square([jig_length, jig_thickness]);
         }
     }
 
