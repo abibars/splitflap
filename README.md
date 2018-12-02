@@ -15,7 +15,7 @@ My intention is to get build a 12 module panel that is controlled over wifi via 
 Most of the documentation has now been moved to the [Wiki](https://github.com/NilSkilz/splitflap/wiki)
 
 
-![animated rendering](https://github.com/NilSkilz/splitflap/blob/master/build/animation/animation.gif)
+![animated rendering](https://github.com/NilSkilz/splitflap/blob/master/docs/animation.gif)
 
 
 
