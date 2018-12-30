@@ -21,10 +21,10 @@ Most of the documentation has now been moved to the [Wiki](https://github.com/Ni
 ### Cost Breakdown ###
 
 Requirements:
-3D Printer (I picked mine up for less than $200)
-Inkjet Printer capable of printing ID cards. See [here](https://brainstormidsupply.com/inkjet-id-cards/kits-cards-trays) for a list of compatible printers
-Inkjet Pinter Tray - around $20
-Soldering Iron, Files, cutting knife
+- 3D Printer (I picked mine up for less than $200)
+- Inkjet Printer capable of printing ID cards. See [here](https://brainstormidsupply.com/inkjet-id-cards/kits-cards-trays) for a list of compatible printers
+- Inkjet Pinter Tray - around $20
+- Soldering Iron, Files, cutting knife
 
 | Item        | Quantity           | Total Price  |
 | ------------- |:-------------:| -----:|
